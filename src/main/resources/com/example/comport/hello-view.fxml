@@ -5,24 +5,27 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.web.WebView?>
 
 <AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.comport.HelloController">
     <children>
+      <WebView fx:id="webView" layoutX="145.0" layoutY="216.0" prefHeight="35.0" prefWidth="129.0"  />
       <TextArea fx:id="textArea" layoutX="70.0" layoutY="43.0" prefHeight="84.0" prefWidth="468.0" />
         <Label layoutX="70.0" layoutY="23.0" prefHeight="17.0" prefWidth="135.0" text="input ">
             <font>
                 <Font size="14.0" />
             </font>
         </Label>
-        <Label layoutX="70.0" layoutY="222.0" prefHeight="17.0" prefWidth="61.0" text="output" />
+        <Label layoutX="70.0" layoutY="271.0" prefHeight="17.0" prefWidth="61.0" text="output" />
         <Label layoutX="70.0" layoutY="160.0" prefHeight="17.0" prefWidth="61.0" text="Baudrate:" />
         <Label layoutX="69.0" layoutY="192.0" prefHeight="17.0" prefWidth="87.0" text="Received bytes:" />
         <Label fx:id="baudRate" layoutX="131.0" layoutY="160.0" />
         <Label fx:id="bytes" layoutX="155.0" layoutY="192.0" />
-      <TextArea fx:id="textArea1" layoutX="70.0" layoutY="239.0" prefHeight="84.0" prefWidth="468.0" />
+      <TextArea fx:id="textArea1" layoutX="70.0" layoutY="288.0" prefHeight="84.0" prefWidth="468.0" />
       <Label layoutX="410.0" layoutY="152.0" prefHeight="17.0" prefWidth="41.0" text="Port :" />
       <ComboBox fx:id="choiceComPort" layoutX="451.0" layoutY="148.0" prefHeight="25.0" prefWidth="87.0" />
       <ComboBox fx:id="stopBits" layoutX="477.0" layoutY="188.0" prefHeight="25.0" prefWidth="61.0" />
       <Label layoutX="410.0" layoutY="192.0" text="Stop bits :" />
+      <Label layoutX="67.0" layoutY="220.0" prefHeight="17.0" prefWidth="68.0" text="byte-stafing" />
     </children>
 </AnchorPane>
