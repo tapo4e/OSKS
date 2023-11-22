@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class Serialports implements SerialPortDataListener {
     private  SerialPort serialPort;
@@ -19,6 +20,7 @@ public class Serialports implements SerialPortDataListener {
     private int counterByte;
 
     private final List<String> list=new ArrayList<>();
+    private boolean fcs;
 
     private final SerialPort[] serialPorts = SerialPort.getCommPorts();
 
@@ -40,28 +42,22 @@ public class Serialports implements SerialPortDataListener {
         open();
     }
     public String sendStringToComm(String command) throws IOException {
-//        StringBuilder string= new StringBuilder(command);
-//        for(int i=0;i<string.length();i++){
-//            if(string.charAt(i)=='$'){
-//                string.deleteCharAt(i);
-//                string.insert(i,"$!");
-//            }
-//            else if (string.charAt(i)=='#' && string.charAt(i+1)=='g'){
-//                string.deleteCharAt(i);
-//                string.deleteCharAt(i+1);
-//                string.insert(i,"$&");
-//            }
-//        }
+        byte[] data = command.getBytes();
+        int crcValue = calculateCRC8(data);
+        System.out.println(crcValue);
+        System.out.printf("CRC-8: 0x%02X\n", crcValue);
         command=command.replace("$","$!");
         command=command.replace("#g","$&");
         byte b=(byte)Integer.parseInt(serialPort.getSystemPortName().replace("COM",""));
-        String str=String.format("%s%s%s%c","#g0","1", command,'0');
-        byte[] bytes=str.getBytes("windows-1251");
-        bytes[3]=b;
+        StringBuilder str=new StringBuilder(String.format("%s%s%s","#g0","1", command));
+        byte[] bt ={(byte)(crcValue)};
+        str.append(new String(bt,"windows-1251"));
+        byte[] bytes=str.toString().getBytes("windows-1251");
         outputStream.write(bytes);
-        str=str.replaceFirst("1",String.format("%x",b));
+        str.insert(str.length()-1," ");
+        str.replace(3, 3, String.format("<html><font color='blue'>%x</font><html>", b));
         System.out.println(str);
-        return str;
+        return str.toString();
     }
 
     @Override
@@ -73,28 +69,21 @@ public class Serialports implements SerialPortDataListener {
         byte[] input = new byte[serialPort.bytesAvailable()];
         counterByte=serialPort.bytesAvailable();
         serialPort.readBytes(input,serialPort.bytesAvailable());
+        String data;
         try {
-            output = new String(input, "windows-1251");
+            data = new String(input, "windows-1251");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
-        output=output.substring(4,output.length()-1);
-//        StringBuilder str= new StringBuilder(output);
-//        for(int i=0;i<str.length();i++){
-//            if(str.charAt(i)=='$' && str.charAt(i+1)=='&'){
-//                str.deleteCharAt(i);
-//                str.deleteCharAt(i+1);
-//                str.insert(i,"#g");
-//            }
-//            else if (str.charAt(i)=='$' && str.charAt(i+1)=='!'){
-//                str.deleteCharAt(i);
-//                str.deleteCharAt(i+1);
-//                str.insert(i,"$");
-//            }
-//        }
-//            output=str.toString();
-       output=output.replace("$&","#g");
-        output=output.replace("$!","$");
+        String fcs=data.substring(data.length()-1);
+        data=data.substring(4,data.length()-1);
+       data=data.replace("$&","#g");
+        data=data.replace("$!","$");
+        try {
+            errorBit(data,fcs.getBytes("windows-1251"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -122,9 +111,7 @@ public class Serialports implements SerialPortDataListener {
 
     public List<String> getList(){
         for(SerialPort port : serialPorts){
-            //if(Integer.parseInt(port.getSystemPortName().replaceAll("COM",""))<15) {
                 list.add(port.getSystemPortName().replaceAll("COM", ""));
-            //}
         }
         return list;
     }
@@ -151,5 +138,73 @@ public class Serialports implements SerialPortDataListener {
         outputStream=serialPort.getOutputStream();
         counterByte = 0;
     }
+    private static int calculateCRC8(byte[] data) {
+        int crc = 0;
 
+        for (byte b : data) {
+            crc ^= b & 0xFF; // XOR текущего байта с текущим значением CRC
+
+            for (int i = 0; i < 8; i++) {
+                if ((crc & 0x20) != 0) {
+                    crc = ((crc << 1) ^ 0x2f); // Сдвиг влево и XOR с полиномом (0x3F)
+                } else {
+                    crc  <<= 1; // Просто сдвиг влево
+                }
+            }
+        }
+
+        return crc & 0x3F; // Обрезаем до 6 бит
+
+    }
+
+    private void errorBit(String data, byte[] fcs) throws UnsupportedEncodingException {
+        Random random = new Random(System.currentTimeMillis());
+        int wordLength = data.length();
+        //System.out.printf("%d\n",fcs[0]);
+        // Генерируем случайное число от 0 до 99
+            int randomValue = random.nextInt(100);
+            byte[] wordArray = data.getBytes("windows-1251");
+
+            if (randomValue <= 30) {
+                // Выбираем случайную позицию для искажения
+                int errorPosition = random.nextInt(wordLength);
+
+                // Инвертируем бит на этой позиции
+
+                int errorbit = random.nextInt(8);
+                byte mask = (byte) (1 << errorbit);
+                wordArray[errorPosition] = (byte) (wordArray[errorPosition] ^ mask);
+
+            }
+            output=data;
+        setFcs(calculateCRC8(wordArray) == (fcs[0]));
+        System.out.println(calculateCRC8(wordArray));
+        System.out.println(fcs[0] & 0x3F);
+        //crc8ErrorFinder(fcs[0]& 0x3F,wordArray);
+            System.out.println("Искаженное слово: " + new String(wordArray, "windows-1251"));
+    }
+
+    public void setFcs(boolean fcs){
+        this.fcs=fcs;
+    }
+    public static void crc8ErrorFinder(int controlSum,byte[] data) throws UnsupportedEncodingException {
+        byte[] data1 = data;
+        System.out.println(controlSum);
+        for (int dataIndex = 0; dataIndex < data1.length; dataIndex++) {
+            for (int i = 7; i >= 0; i--) {
+                data1[dataIndex] = (byte) (data1[dataIndex] ^ (1 << i));
+                if(calculateCRC8(data1)==controlSum){
+                    System.out.println(new String(data1,"windows-1251"));
+                    //return new String(data,"windows-1251");
+                }
+                else {
+                    data1[dataIndex] = (byte) (data1[dataIndex] ^ (1 << i));
+                }
+            }
+        }
+        //return null;
+    }
+    public boolean getFcs(){
+        return fcs;
+    }
 }

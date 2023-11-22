@@ -39,6 +39,8 @@ public class HelloController {
     private ComboBox<Number> stopBits = new ComboBox<>();
     @FXML
     private WebView webView;
+    @FXML
+    private Label fcs;
 
     private final Alert alert = new Alert(Alert.AlertType.ERROR);
 
@@ -75,8 +77,6 @@ public class HelloController {
                             String result = "<p style='font-style:regular;font-size:12'>" + serialports.sendStringToComm(str.toString()).replace("\n", "/n") + "</p>";
                             result = result.replace("$&", "<html><font color='red'>$&</font></html>");
                             result = result.replace("$!", "<html><font color='red'>$!</font></html>");
-                            String number=String.format("%x", (byte) Integer.parseInt(serialports.getSerialPort().getSystemPortName().replace("COM", "")));
-                            result = result.replaceFirst(number, "<html><font color='blue'>"+number+"</font><html>");
                             webView.getEngine().loadContent(result);
                             str.delete(0, str.length());
                         } catch (IOException e) {
@@ -92,7 +92,13 @@ public class HelloController {
         ScheduledExecutorService scheduledService = Executors.newSingleThreadScheduledExecutor();
         Runnable task = () -> {
             if (serialports.getOutput() != null) {
-                Platform.runLater(() -> bytes.setText(serialports.getCounterByte()));
+                Platform.runLater(() -> {bytes.setText(serialports.getCounterByte());
+                    if(!serialports.getFcs())
+                        fcs.setText("*");
+                    else
+                        fcs.setText("");
+                });
+
                 textArea1.setText(textArea1.getText() + serialports.getOutput());
                 textArea1.positionCaret(textArea1.getText().length());
                 serialports.setOutput();

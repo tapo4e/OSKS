@@ -7,6 +7,12 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+
+
 
 public class HelloApplication extends Application {
     @Override
@@ -21,8 +27,8 @@ public class HelloApplication extends Application {
         stage.setOnCloseRequest((WindowEvent event) -> System.exit(0));
         stage.show();
     }
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnsupportedEncodingException {
         launch();
     }
+    }
 
-}
