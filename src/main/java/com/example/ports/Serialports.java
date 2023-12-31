@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Random;
 
 public class Serialports implements SerialPortDataListener {
+    private boolean cd=false;
+    private boolean lock = false;
     private  SerialPort serialPort;
     private String output=null;
     private OutputStream outputStream;
@@ -41,7 +43,7 @@ public class Serialports implements SerialPortDataListener {
         }
         open();
     }
-    public String sendStringToComm(String command) throws IOException {
+    public String sendStringToComm(String command,int count) throws IOException, InterruptedException {
         byte[] data = command.getBytes();
         int crcValue = calculateCRC8(data);
         System.out.println(crcValue);
@@ -53,10 +55,21 @@ public class Serialports implements SerialPortDataListener {
         byte[] bt ={(byte)(crcValue)};
         str.append(new String(bt,"windows-1251"));
         byte[] bytes=str.toString().getBytes("windows-1251");
-        outputStream.write(bytes);
+
+            if(!isOccupied() && !CD()) {
+                if(count<10) {
+                    outputStream.write(bytes);
+                }
+                lock=false;
+                cd=false;
+            }
+            else {
+                outputStream.write("a".getBytes());
+                lock=true;
+                cd= true;
+            }
         str.insert(str.length()-1," ");
         str.replace(3, 3, String.format("<html><font color='blue'>%x</font><html>", b));
-        System.out.println(str);
         return str.toString();
     }
 
@@ -68,6 +81,7 @@ public class Serialports implements SerialPortDataListener {
     public void serialEvent(SerialPortEvent event) {
         byte[] input = new byte[serialPort.bytesAvailable()];
         counterByte=serialPort.bytesAvailable();
+        System.out.println("a" + counterByte);
         serialPort.readBytes(input,serialPort.bytesAvailable());
         String data;
         try {
@@ -204,7 +218,24 @@ public class Serialports implements SerialPortDataListener {
         }
         //return null;
     }
+    private boolean isOccupied() throws InterruptedException {
+        Random random = new Random(System.currentTimeMillis());
+        int randomValue = random.nextInt(100);
+        return randomValue <= 30;
+    }
+
+    private boolean CD(){
+        Random random = new Random(System.currentTimeMillis());
+        int randomValue = random.nextInt(100);
+        return randomValue <= 70;
+    }
+    public boolean getLock(){
+        return  lock;
+    }
     public boolean getFcs(){
         return fcs;
+    }
+    public boolean getCD(){
+        return  cd;
     }
 }

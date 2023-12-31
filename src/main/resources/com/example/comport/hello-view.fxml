@@ -28,5 +28,6 @@
       <Label layoutX="410.0" layoutY="192.0" text="Stop bits :" />
       <Label layoutX="67.0" layoutY="220.0" prefHeight="17.0" prefWidth="68.0" text="byte-stafing" />
       <Label fx:id="fcs" layoutX="180.0" layoutY="192.0" prefHeight="17.0" prefWidth="0.0" />
+      <Label fx:id="countCD" layoutX="367.0" layoutY="229.0" />
     </children>
 </AnchorPane>

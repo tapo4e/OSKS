@@ -12,6 +12,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
+import static java.lang.Math.pow;
 
 
 public class HelloApplication extends Application {
@@ -29,6 +30,7 @@ public class HelloApplication extends Application {
     }
     public static void main(String[] args) throws UnsupportedEncodingException {
         launch();
+
     }
     }
 
